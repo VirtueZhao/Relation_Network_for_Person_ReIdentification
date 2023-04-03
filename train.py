@@ -58,7 +58,10 @@ def main(args):
     np_ratio = args.num_individuals - 1
 
     # Build Data Loader
-    dataset, train_loader, val_loader, test_loader = build_data_loader()
+    dataset, train_loader, val_loader, test_loader = build_data_loader(args.dataset, args.split, args.dataset_path,
+                                                                       args.h, args.w, args.batch_size,
+                                                                       args.num_workers, args.combine_trainval, np_ratio
+                                                                       )
 
 
 if __name__ == "__main__":
