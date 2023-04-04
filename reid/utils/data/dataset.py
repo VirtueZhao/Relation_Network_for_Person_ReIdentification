@@ -1,8 +1,32 @@
-import os.path as osp
-
 import numpy as np
-
+import os.path as osp
 from ..serialization import read_json
+
+
+def _pluck(identities, indices, relabel=False):
+    ret = []
+    query = {}
+
+    for index, pid in enumerate(indices):
+        pid_images = identities[pid]
+        if relabel:
+            if index not in query.keys():
+                query[index] = []
+        else:
+            if pid not in query.keys():
+                query[pid] = []
+        for camid, cam_images in enumerate(pid_images):
+            for fname in cam_images:
+                # name = osp.splitext(fname)[0]
+                # x, y, _ = map(int, name.split('_'))
+                if relabel:
+                    ret.append((fname, index, camid))
+                    query[index].append(fname)
+                else:
+                    ret.append((fname, pid, camid))
+                    query[pid].append(fname)
+
+    return ret, query
 
 
 class Dataset(object):
@@ -34,8 +58,6 @@ class Dataset(object):
         self.meta = read_json(osp.join(self.dataset_path, "meta.json"))
         identities = self.meta["identities"]
         self.train, self.train_query = _pluck(identities, train_pids, relabel=True)
-
-
 
 
     def _check_integrity(self):
