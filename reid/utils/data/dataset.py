@@ -1,5 +1,6 @@
 import numpy as np
 import os.path as osp
+from tabulate import tabulate
 from ..serialization import read_json
 
 
@@ -58,6 +59,42 @@ class Dataset(object):
         self.meta = read_json(osp.join(self.dataset_path, "meta.json"))
         identities = self.meta["identities"]
         self.train, self.train_query = _pluck(identities, train_pids, relabel=True)
+        self.val, self.val_query = _pluck(identities, val_pids, relabel=True)
+        self.trainval, self.trainval_query = _pluck(identities, trainval_pids, relabel=True)
+
+        self.test_list = read_json(osp.join(self.dataset_path, "test.json"))[0]
+        for i in range(len(self.test_list['query'])):
+            self.test_list['query'][i] = tuple(self.test_list['query'][i])
+        for i in range(len(self.test_list['gallery'])):
+            self.test_list['gallery'][i] = tuple(self.test_list['gallery'][i])
+        self.query = self.test_list['query']
+        self.gallery = self.test_list['query']
+        self.num_train_ids = len(train_pids)
+        self.num_val_ids = len(val_pids)
+        self.num_trainval_ids = len(trainval_pids)
+
+        if verbose:
+            print("Dataset {} Loaded".format(self.__class__.__name__))
+
+            dataset_table = [
+                ["Subset", "# ID", "# Images"],
+                ["Train", self.num_train_ids, len(self.train)],
+                ["Val", self.num_val_ids, len(self.val)],
+                ["Trainval", self.num_trainval_ids, len(self.trainval)],
+                ["Query", len(self.split['query']), len(self.query)],
+                ["Gallery", len(self.split['gallery']), len(self.gallery)]
+            ]
+            
+            print(tabulate(dataset_table))
+
+
+            # print("  query    | {:5d} | {:8d}"
+            #       .format(len(self.split['query']), len(self.query)))
+            # print("  gallery  | {:5d} | {:8d}"
+            #       .format(len(self.split['gallery']), len(self.gallery)))
+
+
+
 
 
     def _check_integrity(self):
