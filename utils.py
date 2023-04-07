@@ -33,7 +33,7 @@ def build_data_loader(dataset_name, split_id, data_path, img_height, img_width, 
     ])
 
     train_loader = DataLoader(
-        Preprocessor(train_set, data_path=dataset.images_dir, transform=train_transformer)
+        Preprocessor(train_set, dataset_path=dataset.images_dir, transform=train_transformer)
     )
 
     return 1, 2, 3, 4
