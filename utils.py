@@ -2,6 +2,7 @@ import os.path as osp
 from reid import datasets
 from reid.utils.data import transforms as T
 from reid.utils.data.preprocessor import Preprocessor
+from reid.utils.data.sampler import TripletBatchSampler
 
 from torch.utils.data import DataLoader
 
@@ -33,7 +34,30 @@ def build_data_loader(dataset_name, split_id, data_path, img_height, img_width, 
     ])
 
     train_loader = DataLoader(
-        Preprocessor(train_set, dataset_path=dataset.images_dir, transform=train_transformer)
+        Preprocessor(train_set,
+                     dataset_path=dataset.images_dir, transform=train_transformer),
+        sampler=TripletBatchSampler(train_set),
+        batch_size=batch_size,
+        num_workers=num_workers,
+        pin_memory=False
     )
 
-    return 1, 2, 3, 4
+    val_loader = DataLoader(
+        Preprocessor(dataset.val,
+                     dataset_path=dataset.images_dir, transform=test_transformer),
+        batch_size=batch_size,
+        num_workers=num_workers,
+        shuffle=False,
+        pin_memory=False
+    )
+
+    test_loader = DataLoader(
+        Preprocessor(list(set(dataset.query) | set(dataset.gallery)),
+                     dataset_path=dataset.images_dir, transform=test_transformer),
+        batch_size=batch_size,
+        num_workers=num_workers,
+        shuffle=False,
+        pin_memory=False
+    )
+
+    return dataset, train_loader, val_loader, test_loader
