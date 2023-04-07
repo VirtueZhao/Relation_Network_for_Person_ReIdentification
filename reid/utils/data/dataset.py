@@ -40,6 +40,13 @@ class Dataset(object):
         self.query, self.gallery = [], []
         self.num_train_ids, self.num_val_ids, self.num_trainval_ids = 0, 0, 0
 
+    def __len__(self):
+        return
+
+    @property
+    def images_dir(self):
+        return osp.join(self.dataset_path, 'images')
+
     def load(self, num_val=0.3, verbose=True):
         splits = read_json(osp.join(self.dataset_path, "splits.json"))
         if self.split_id >= len(splits):
@@ -84,18 +91,8 @@ class Dataset(object):
                 ["Query", len(self.split['query']), len(self.query)],
                 ["Gallery", len(self.split['gallery']), len(self.gallery)]
             ]
-            
+
             print(tabulate(dataset_table))
-
-
-            # print("  query    | {:5d} | {:8d}"
-            #       .format(len(self.split['query']), len(self.query)))
-            # print("  gallery  | {:5d} | {:8d}"
-            #       .format(len(self.split['gallery']), len(self.gallery)))
-
-
-
-
 
     def _check_integrity(self):
         return osp.isdir(osp.join(self.dataset_path, "images")) and \
