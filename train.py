@@ -6,7 +6,7 @@ import numpy as np
 from tabulate import tabulate
 
 from utils import build_data_loader
-
+from Relation_final_ver_last_multi_scale_large_losses import RelationModel as Model
 
 def print_args(args):
     args_table = [
@@ -63,7 +63,6 @@ def main(args):
                                                                        args.num_workers, args.combine_trainval, np_ratio
                                                                        )
     # Build Model
-    print("Build Model")
     model = Model(last_conv_stride=1, num_stripes=6, local_conv_out_channels=256, num_classes=dataset.num_trainval_ids)
 
 if __name__ == "__main__":
