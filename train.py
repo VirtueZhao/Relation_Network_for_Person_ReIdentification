@@ -62,7 +62,9 @@ def main(args):
                                                                        args.h, args.w, args.batch_size,
                                                                        args.num_workers, args.combine_trainval, np_ratio
                                                                        )
-
+    # Build Model
+    print("Build Model")
+    model = Model(last_conv_stride=1, num_stripes=6, local_conv_out_channels=256, num_classes=dataset.num_trainval_ids)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
