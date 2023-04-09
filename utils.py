@@ -60,4 +60,6 @@ def build_data_loader(dataset_name, split_id, data_path, img_height, img_width, 
         pin_memory=False
     )
 
+    # t = TripletBatchSampler(train_set)
+
     return dataset, train_loader, val_loader, test_loader
