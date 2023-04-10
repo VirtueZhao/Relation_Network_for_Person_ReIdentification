@@ -4,8 +4,10 @@ import random
 import argparse
 import numpy as np
 from tabulate import tabulate
+from torch.nn import CrossEntropyLoss
 
 from utils import build_data_loader
+from triplet import TripletSemiHardLoss
 from Relation_final_ver_last_multi_scale_large_losses import RelationModel as Model
 
 def print_args(args):
@@ -64,6 +66,13 @@ def main(args):
                                                                        )
     # Build Model
     model = Model(last_conv_stride=1, num_stripes=6, local_conv_out_channels=256, num_classes=dataset.num_trainval_ids)
+    device = torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu")
+    model = model.to(device)
+
+    # Losses and Optimizer
+    cross_entropy_loss = CrossEntropyLoss()
+    triplet_loss = TripletSemiHardLoss(device=device, margin=args.margin)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
