@@ -1,15 +1,19 @@
 import os
+import time
 import torch
 import random
 import argparse
 import numpy as np
 import torch.optim as optim
 from tabulate import tabulate
+from torch.autograd import Variable
 from torch.nn import CrossEntropyLoss
 
-from utils import build_data_loader
 from triplet import TripletSemiHardLoss
+from reid.utils.meters import AverageMeter
+from utils import build_data_loader, adjust_lr_staircase
 from Relation_final_ver_last_multi_scale_large_losses import RelationModel as Model
+
 
 def print_args(args):
     args_table = [
@@ -86,8 +90,35 @@ def main(args):
 
     for epoch in range(1, args.max_epoch + 1):
         print("Current Epoch: {}".format(epoch))
-        exit()
 
+        adjust_lr_staircase(
+            optimizer.param_groups,
+            [args.backbone_lr, args.lr],
+            epoch,
+            decay_schedule,
+            args.lr_decay_factor)
+
+        model.train()
+        batch_time = AverageMeter()
+        data_time = AverageMeter()
+        losses = AverageMeter()
+        precisions = AverageMeter()
+
+        end = time.time()
+
+        for i, inputs in enumerate(train_loader):
+            data_time.update(time.time() - end)
+
+            (imgs, _, labels, _) = inputs
+            inputs = Variable(imgs).float().cuda()
+            labels = Variable(labels).cuda()
+
+            optimizer.zero_grad()
+            print("Forward Data")
+            print(labels)
+            exit()
+
+        exit()
 
 
 if __name__ == "__main__":

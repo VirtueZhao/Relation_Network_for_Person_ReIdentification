@@ -61,3 +61,25 @@ def build_data_loader(dataset_name, split_id, data_path, img_height, img_width, 
     )
 
     return dataset, train_loader, val_loader, test_loader
+
+
+def find_index(seq, item):
+    for i, x in enumerate(seq):
+        if item == x:
+            return i
+    return -1
+
+
+def adjust_lr_staircase(param_groups, base_lrs, ep, decay_at_epochs, factor):
+
+    assert len(base_lrs) == len(param_groups), \
+        "You should specify base lr for each param group."
+    assert ep >= 1, "Current epoch number should be >= 1"
+
+    if ep not in decay_at_epochs:
+        return
+
+    ind = find_index(decay_at_epochs, ep)
+    for i, (g, base_lr) in enumerate(zip(param_groups, base_lrs)):
+        g['lr'] = base_lr * factor ** (ind + 1)
+        print('=====> Param group {}: lr adjusted to {:.10f}'.format(i, g['lr']).rstrip('0'))
