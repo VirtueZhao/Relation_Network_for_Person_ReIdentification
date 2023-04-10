@@ -3,6 +3,7 @@ import torch
 import random
 import argparse
 import numpy as np
+import torch.optim as optim
 from tabulate import tabulate
 from torch.nn import CrossEntropyLoss
 
@@ -72,6 +73,21 @@ def main(args):
     # Losses and Optimizer
     cross_entropy_loss = CrossEntropyLoss()
     triplet_loss = TripletSemiHardLoss(device=device, margin=args.margin)
+
+    finetuned_params = list(model.base.parameters())
+
+    new_params = [p for n, p in model.named_parameters()
+                  if not n.startswith('base.')]
+
+    param_groups = [{'params': finetuned_params, 'lr': args.lr * 0.1},
+                    {'params': new_params, 'lr': args.lr}]
+
+    optimizer = optim.SGD(param_groups, momentum=args.sgd_momentum, weight_decay=args.sgd_weight_decay)
+
+    for epoch in range(1, args.max_epoch + 1):
+        print("Current Epoch: {}".format(epoch))
+        exit()
+
 
 
 if __name__ == "__main__":
