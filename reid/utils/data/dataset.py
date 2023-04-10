@@ -18,8 +18,6 @@ def _pluck(identities, indices, relabel=False):
                 query[pid] = []
         for camid, cam_images in enumerate(pid_images):
             for fname in cam_images:
-                # name = osp.splitext(fname)[0]
-                # x, y, _ = map(int, name.split('_'))
                 if relabel:
                     ret.append((fname, index, camid))
                     query[index].append(fname)
@@ -31,8 +29,8 @@ def _pluck(identities, indices, relabel=False):
 
 
 class Dataset(object):
-    def __init__(self, dataset_path, split_id=0):
-        self.dataset_path = dataset_path
+    def __init__(self, root, split_id=0):
+        self.root = root
         self.split_id = split_id
         self.meta = None
         self.split = None
@@ -45,13 +43,16 @@ class Dataset(object):
 
     @property
     def images_dir(self):
-        return osp.join(self.dataset_path, 'images')
+        return osp.join(self.root, 'images')
+
+    # @property
+    # def poses_dir(self):
+    #     return osp.join(self.root, 'poses')
 
     def load(self, num_val=0.3, verbose=True):
-        splits = read_json(osp.join(self.dataset_path, "splits.json"))
+        splits = read_json(osp.join(self.root, 'splits.json'))
         if self.split_id >= len(splits):
             raise ValueError("split_id exceeds total splits {}".format(len(splits)))
-
         self.split = splits[self.split_id]
 
         trainval_pids = sorted(np.asarray(self.split['trainval']))
@@ -63,19 +64,18 @@ class Dataset(object):
         train_pids = sorted(trainval_pids[:-num_val])
         val_pids = sorted(trainval_pids[-num_val:])
 
-        self.meta = read_json(osp.join(self.dataset_path, "meta.json"))
-        identities = self.meta["identities"]
+        self.meta = read_json(osp.join(self.root, 'meta.json'))
+        identities = self.meta['identities']
         self.train, self.train_query = _pluck(identities, train_pids, relabel=True)
         self.val, self.val_query = _pluck(identities, val_pids, relabel=True)
         self.trainval, self.trainval_query = _pluck(identities, trainval_pids, relabel=True)
-
-        self.test_list = read_json(osp.join(self.dataset_path, "test.json"))[0]
+        self.test_list = read_json(osp.join(self.root, 'test.json'))[0]
         for i in range(len(self.test_list['query'])):
             self.test_list['query'][i] = tuple(self.test_list['query'][i])
         for i in range(len(self.test_list['gallery'])):
             self.test_list['gallery'][i] = tuple(self.test_list['gallery'][i])
         self.query = self.test_list['query']
-        self.gallery = self.test_list['query']
+        self.gallery = self.test_list['gallery']
         self.num_train_ids = len(train_pids)
         self.num_val_ids = len(val_pids)
         self.num_trainval_ids = len(trainval_pids)
@@ -91,11 +91,10 @@ class Dataset(object):
                 ["Query", len(self.split['query']), len(self.query)],
                 ["Gallery", len(self.split['gallery']), len(self.gallery)]
             ]
-
             print(tabulate(dataset_table))
 
     def _check_integrity(self):
-        return osp.isdir(osp.join(self.dataset_path, "images")) and \
-            osp.isfile(osp.join(self.dataset_path, "meta.json")) and \
-            osp.isfile(osp.join(self.dataset_path, "splits.json")) and \
-            osp.isdir(osp.join(self.dataset_path, "poses"))
+        return osp.isdir(osp.join(self.root, 'images')) and \
+            osp.isfile(osp.join(self.root, 'meta.json')) and \
+            osp.isfile(osp.join(self.root, 'splits.json')) and \
+            osp.isdir(osp.join(self.root, 'poses'))
