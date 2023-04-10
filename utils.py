@@ -35,7 +35,7 @@ def build_data_loader(dataset_name, split_id, data_path, img_height, img_width, 
 
     train_loader = DataLoader(
         Preprocessor(train_set,
-                     dataset_path=dataset.images_dir, transform=train_transformer),
+                     root=dataset.images_dir, transform=train_transformer),
         sampler=TripletBatchSampler(train_set),
         batch_size=batch_size,
         num_workers=num_workers,
@@ -44,7 +44,7 @@ def build_data_loader(dataset_name, split_id, data_path, img_height, img_width, 
 
     val_loader = DataLoader(
         Preprocessor(dataset.val,
-                     dataset_path=dataset.images_dir, transform=test_transformer),
+                     root=dataset.images_dir, transform=test_transformer),
         batch_size=batch_size,
         num_workers=num_workers,
         shuffle=False,
@@ -53,7 +53,7 @@ def build_data_loader(dataset_name, split_id, data_path, img_height, img_width, 
 
     test_loader = DataLoader(
         Preprocessor(list(set(dataset.query) | set(dataset.gallery)),
-                     dataset_path=dataset.images_dir, transform=test_transformer),
+                     root=dataset.images_dir, transform=test_transformer),
         batch_size=batch_size,
         num_workers=num_workers,
         shuffle=False,
