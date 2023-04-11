@@ -115,7 +115,10 @@ def main(args):
 
             optimizer.zero_grad()
             print("Forward Data")
-            print(labels)
+
+            final_feat_list, logits_local_rest_list, logits_local_list, logits_rest_list, logits_global_list = model(inputs)
+            T_loss = torch.sum(torch.stack([cross_entropy_loss(output, labels) for output in final_feat_list]))
+            print(T_loss)
             exit()
 
         exit()

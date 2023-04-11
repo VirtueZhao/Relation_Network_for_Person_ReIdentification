@@ -1,3 +1,5 @@
+# from __future__ import absolute_import
+import math
 import random
 import numpy as np
 from PIL import Image
@@ -5,16 +7,46 @@ from torchvision.transforms import *
 
 
 class RectScale(object):
-    def __init__(self, img_height, img_width, interpolation=Image.BILINEAR):
-        self.img_height = img_height
-        self.img_width = img_width
+    def __init__(self, height, width, interpolation=Image.BILINEAR):
+        self.height = height
+        self.width = width
         self.interpolation = interpolation
 
     def __call__(self, img):
         w, h = img.size
-        if h == self.img_height and w == self.img_width:
+        if h == self.height and w == self.width:
             return img
-        return img.resize((self.img_width, self.img_height), self.interpolation)
+        return img.resize((self.width, self.height), self.interpolation)
+
+
+# class RandomSizedRectCrop(object):
+#     def __init__(self, height, width, interpolation=Image.BILINEAR):
+#         self.height = height
+#         self.width = width
+#         self.interpolation = interpolation
+#
+#     def __call__(self, img):
+#         for attempt in range(10):
+#             area = img.size[0] * img.size[1]
+#             target_area = random.uniform(0.64, 1.0) * area
+#             aspect_ratio = random.uniform(2, 3)
+#
+#             h = int(round(math.sqrt(target_area * aspect_ratio)))
+#             w = int(round(math.sqrt(target_area / aspect_ratio)))
+#
+#             if w <= img.size[0] and h <= img.size[1]:
+#                 x1 = random.randint(0, img.size[0] - w)
+#                 y1 = random.randint(0, img.size[1] - h)
+#
+#                 img = img.crop((x1, y1, x1 + w, y1 + h))
+#                 assert(img.size == (w, h))
+#
+#                 return img.resize((self.width, self.height), self.interpolation)
+#
+#         # Fallback
+#         scale = RectScale(self.height, self.width,
+#                           interpolation=self.interpolation)
+#         return scale(img)
 
 
 class RandomSizedEarser(object):
@@ -27,7 +59,7 @@ class RandomSizedEarser(object):
     def __call__(self, img):
         p1 = random.uniform(-1, 1.0)
         W = img.size[0]
-        H = img.size[0]
+        H = img.size[1]
         area = H * W
 
         if p1 > self.p:
@@ -42,7 +74,7 @@ class RandomSizedEarser(object):
                 xe = random.uniform(0, W - We)
                 ye = random.uniform(0, H - He)
                 if xe + We <= W and ye + He <= H and xe > 0 and ye > 0:
-                    x1 = int(np.cell(xe))
+                    x1 = int(np.ceil(xe))
                     y1 = int(np.ceil(ye))
                     x2 = int(np.floor(x1 + We))
                     y2 = int(np.floor(y1 + He))

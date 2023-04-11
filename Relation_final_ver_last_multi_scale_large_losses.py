@@ -260,4 +260,63 @@ class RelationModel(nn.Module):
             self.fc_global_rest_2_list.append(fc)
 
     def forward(self, x):
-        print("Not Implemented Yet")
+        criterion = nn.CrossEntropyLoss()
+
+        feat = self.base(x)
+        assert (feat.size(2) % self.num_stripes == 0)
+        stripe_h_6 = int(feat.size(2) / self.num_stripes)
+        stripe_h_4 = int(feat.size(2) / 4)
+        stripe_h_2 = int(feat.size(2) / 2)
+        local_6_feat_list = []
+        local_4_feat_list = []
+        local_2_feat_list = []
+        final_feat_list = []
+        # logits_list = []
+        rest_6_feat_list = []
+        rest_4_feat_list = []
+        rest_2_feat_list = []
+        logits_local_rest_list = []
+        logits_local_list = []
+        logits_rest_list = []
+        logits_global_list = []
+
+        for i in range(self.num_stripes):
+            local_6_feat = F.max_pool2d(feat[:, :, i * stripe_h_6: (i + 1) * stripe_h_6, :], (stripe_h_6, feat.size(-1)))
+            local_6_feat_list.append(local_6_feat)
+
+        global_6_max_feat = F.max_pool2d(feat, (feat.size(2), feat.size(3)))
+        global_6_rest_feat = (local_6_feat_list[0] + local_6_feat_list[1] + local_6_feat_list[2] + local_6_feat_list[3]
+                              + local_6_feat_list[4] + local_6_feat_list[5] - global_6_max_feat) / 5
+        global_6_max_feat = self.global_6_max_conv_list[0](global_6_max_feat)
+        global_6_rest_feat = self.global_6_rest_conv_list[0](global_6_rest_feat)
+        global_6_max_rest_feat = self.global_6_pooling_conv_list[0](torch.cat((global_6_max_feat, global_6_rest_feat), 1))
+        global_6_feat = (global_6_max_feat + global_6_max_rest_feat).squeeze(3).squeeze(2)
+
+        for i in range(self.num_stripes):
+            rest_6_feat_list.append((local_6_feat_list[(i+1) % self.num_stripes] +
+                                     local_6_feat_list[(i+2) % self.num_stripes] +
+                                     local_6_feat_list[(i+3) % self.num_stripes] +
+                                     local_6_feat_list[(i+4) % self.num_stripes] +
+                                     local_6_feat_list[(i+5) % self.num_stripes]) / 5)
+
+        for i in range(4):
+            local_4_feat = F.max_pool2d(feat[:, :, i * stripe_h_4: (i + 1) * stripe_h_4, :], (stripe_h_4, feat.size(-1)))
+            local_4_feat_list.append(local_4_feat)
+
+        global_4_max_feat = F.max_pool2d(feat, (feat.size(2), feat.size(3)))
+        global_4_rest_feat = (local_4_feat_list[0] + local_4_feat_list[1] + local_4_feat_list[2] + local_4_feat_list[3]
+                              - global_4_max_feat) / 3
+        global_4_max_feat = self.global_4_max_conv_list[0](global_4_max_feat)
+        global_4_rest_feat = self.global_4_rest_conv_list[0](global_4_rest_feat)
+        global_4_max_rest_feat = self.global_4_pooling_conv_list[0](torch.cat((global_4_max_feat, global_4_rest_feat), 1))
+        global_4_feat = (global_4_max_feat + global_4_max_rest_feat).squeeze(3).squeeze(2)
+
+        for i in range(4):
+            rest_4_feat_list.append((local_4_feat_list[(i+1) % 4] +
+                                     local_4_feat_list[(i+2) % 4] +
+                                     local_4_feat_list[(i+3) % 4])/3)
+
+        for i in range(2):
+            local_2_feat = F.max_pool2d(feat[:, :, i * stripe_h_2: (i + 1) * stripe_h_2, :], (stripe_h_2, feat.size(-1)))
+            local_2_feat_list.append(local_2_feat)
+
