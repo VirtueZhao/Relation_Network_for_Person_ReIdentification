@@ -1,26 +1,21 @@
 import os.path as osp
 from reid import datasets
+from torch.utils.data import DataLoader
 from reid.utils.data import transforms as T
 from reid.utils.data.preprocessor import Preprocessor
 from reid.utils.data.sampler import TripletBatchSampler
 
-from torch.utils.data import DataLoader
 
-
-def build_data_loader(dataset_name, split_id, data_path, img_height, img_width, batch_size, num_workers,
-                      combine_trainval, np_ratio):
-
+def get_data(name, split_id, data_dir, height, width, batch_size, workers, combine_trainval, np_ratio):
     print("Build Data Loader")
-    data_path = osp.join(data_path, dataset_name)
-    dataset = datasets.create(dataset_name, data_path, split_id=split_id)
 
-    normalizer = T.Normalize(mean=[0.485, 0.456, 0.406],
-                             std=[0.229, 0.224, 0.225])
-
+    root = osp.join(data_dir, name)
+    dataset = datasets.create(name, root, split_id=split_id)
+    normalizer = T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     train_set = dataset.trainval if combine_trainval else dataset.train
 
     train_transformer = T.Compose([
-        T.RectScale(img_height, img_width),
+        T.RectScale(height, width),
         T.RandomSizedEarser(),
         T.RandomHorizontalFlip(),
         T.ToTensor(),
@@ -28,34 +23,31 @@ def build_data_loader(dataset_name, split_id, data_path, img_height, img_width, 
     ])
 
     test_transformer = T.Compose([
-        T.RectScale(img_height, img_width),
+        T.RectScale(height, width),
         T.ToTensor(),
         normalizer
     ])
 
     train_loader = DataLoader(
-        Preprocessor(train_set,
-                     root=dataset.images_dir, transform=train_transformer),
+        Preprocessor(train_set, root=dataset.images_dir, transform=train_transformer),
         sampler=TripletBatchSampler(train_set),
         batch_size=batch_size,
-        num_workers=num_workers,
+        num_workers=workers,
         pin_memory=False
     )
 
     val_loader = DataLoader(
-        Preprocessor(dataset.val,
-                     root=dataset.images_dir, transform=test_transformer),
+        Preprocessor(dataset.val, root=dataset.images_dir, transform=test_transformer),
         batch_size=batch_size,
-        num_workers=num_workers,
+        num_workers=workers,
         shuffle=False,
         pin_memory=False
     )
 
     test_loader = DataLoader(
-        Preprocessor(list(set(dataset.query) | set(dataset.gallery)),
-                     root=dataset.images_dir, transform=test_transformer),
+        Preprocessor(list(set(dataset.query) | set(dataset.gallery)), root=dataset.images_dir, transform=test_transformer),
         batch_size=batch_size,
-        num_workers=num_workers,
+        num_workers=workers,
         shuffle=False,
         pin_memory=False
     )

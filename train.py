@@ -11,7 +11,7 @@ from torch.nn import CrossEntropyLoss
 
 from triplet import TripletSemiHardLoss
 from reid.utils.meters import AverageMeter
-from utils import build_data_loader, adjust_lr_staircase
+from utils import get_data, adjust_lr_staircase
 from Relation_final_ver_last_multi_scale_large_losses import RelationModel as Model
 
 
@@ -65,7 +65,7 @@ def main(args):
     np_ratio = args.num_individuals - 1
 
     # Build Data Loader
-    dataset, train_loader, val_loader, test_loader = build_data_loader(args.dataset, args.split, args.dataset_path,
+    dataset, train_loader, val_loader, test_loader = get_data(args.dataset, args.split, args.dataset_path,
                                                                        args.h, args.w, args.batch_size,
                                                                        args.num_workers, args.combine_trainval, np_ratio
                                                                        )
