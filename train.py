@@ -69,6 +69,7 @@ def main(args):
                                                                        args.h, args.w, args.batch_size,
                                                                        args.num_workers, args.combine_trainval, np_ratio
                                                                        )
+
     # Build Model
     model = Model(last_conv_stride=1, num_stripes=6, local_conv_out_channels=256, num_classes=dataset.num_trainval_ids)
     device = torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu")
@@ -110,8 +111,8 @@ def main(args):
             data_time.update(time.time() - end)
 
             (imgs, _, labels, _) = inputs
-            inputs = Variable(imgs).float().cuda()
-            labels = Variable(labels).cuda()
+            inputs = Variable(imgs).float().cuda(device)
+            labels = Variable(labels).cuda(device)
 
             optimizer.zero_grad()
             print("Forward Data")
