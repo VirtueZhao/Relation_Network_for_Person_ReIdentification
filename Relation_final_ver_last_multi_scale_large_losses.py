@@ -320,3 +320,70 @@ class RelationModel(nn.Module):
             local_2_feat = F.max_pool2d(feat[:, :, i * stripe_h_2: (i + 1) * stripe_h_2, :], (stripe_h_2, feat.size(-1)))
             local_2_feat_list.append(local_2_feat)
 
+        global_2_max_feat = F.max_pool2d(feat, (feat.size(2), feat.size(3)))
+        global_2_rest_feat = (local_2_feat_list[0] + local_2_feat_list[1] - global_2_max_feat)
+        global_2_max_feat = self.global_2_max_conv_list[0](global_2_max_feat)
+        global_2_rest_feat = self.global_2_rest_conv_list[0](global_2_rest_feat)
+        global_2_max_rest_feat = self.global_2_pooling_conv_list[0](torch.cat((global_2_max_feat, global_2_rest_feat), 1))
+        global_2_feat = (global_2_max_feat + global_2_max_rest_feat).squeeze(3).squeeze(2)
+
+        for i in range(2):
+            rest_2_feat_list.append((local_2_feat_list[(i+1) % 2]))
+
+        for i in range(self.num_stripes):
+            local_6_feat = self.local_6_conv_list[i](local_6_feat_list[i]).squeeze(3).squeeze(2)
+            input_rest_6_feat = self.rest_6_conv_list[i](rest_6_feat_list[i]).squeeze(3).squeeze(2)
+            input_local_rest_6_feat = torch.cat((local_6_feat, input_rest_6_feat), 1).unsqueeze(2).unsqueeze(3)
+            local_rest_6_feat = self.relation_6_conv_list[i](input_local_rest_6_feat)
+            local_rest_6_feat = (local_rest_6_feat + local_6_feat.unsqueeze(2).unsqueeze(3)).squeeze(3).squeeze(2)
+            final_feat_list.append(local_rest_6_feat)
+
+            if self.num_classes > 0:
+                logits_local_rest_list.append(self.fc_local_rest_6_list[i](local_rest_6_feat))
+                logits_local_list.append(self.fc_local_6_list[i](local_6_feat))
+                logits_rest_list.append(self.fc_rest_6_list[i](input_rest_6_feat))
+
+        for i in range(4):
+            local_4_feat = self.local_4_conv_list[i](local_4_feat_list[i]).squeeze(3).squeeze(2)
+            input_rest_4_feat = self.rest_4_conv_list[i](rest_4_feat_list[i]).squeeze(3).squeeze(2)
+            input_local_rest_4_feat = torch.cat((local_4_feat, input_rest_4_feat), 1).unsqueeze(2).unsqueeze(3)
+            local_rest_4_feat = self.relation_4_conv_list[i](input_local_rest_4_feat)
+            local_rest_4_feat = (local_rest_4_feat + local_4_feat.unsqueeze(2).unsqueeze(3)).squeeze(3).squeeze(2)
+            final_feat_list.append(local_rest_4_feat)
+
+            if self.num_classes > 0:
+                logits_local_rest_list.append(self.fc_local_rest_4_list[i](local_rest_4_feat))
+                logits_local_list.append(self.fc_local_4_list[i](local_4_feat))
+                logits_rest_list.append(self.fc_rest_4_list[i](input_rest_4_feat))
+
+        for i in range(2):
+            local_2_feat = self.local_2_conv_list[i](local_2_feat_list[i]).squeeze(3).squeeze(2)
+            input_rest_2_feat = self.rest_2_conv_list[i](rest_2_feat_list[i]).squeeze(3).squeeze(2)
+            input_local_rest_2_feat = torch.cat((local_2_feat, input_rest_2_feat), 1).unsqueeze(2).unsqueeze(3)
+            local_rest_2_feat = self.relation_2_conv_list[i](input_local_rest_2_feat)
+            local_rest_2_feat = (local_rest_2_feat + local_2_feat.unsqueeze(2).unsqueeze(3)).squeeze(3).squeeze(2)
+            final_feat_list.append(local_rest_2_feat)
+
+            if self.num_classes > 0:
+                logits_local_rest_list.append(self.fc_local_rest_2_list[i](local_rest_2_feat))
+                logits_local_list.append(self.fc_local_2_list[i](local_2_feat))
+                logits_rest_list.append(self.fc_rest_2_list[i](input_rest_2_feat))
+
+        final_feat_list.append(global_6_feat)
+        final_feat_list.append(global_4_feat)
+        final_feat_list.append(global_2_feat)
+
+        if self.num_classes > 0:
+            logits_global_list.append(self.fc_global_6_list[0](global_6_feat))
+            logits_global_list.append(self.fc_global_max_6_list[0](global_6_max_feat.squeeze(3).squeeze(2)))
+            logits_global_list.append(self.fc_global_rest_6_list[0](global_6_rest_feat.squeeze(3).squeeze(2)))
+            logits_global_list.append(self.fc_global_4_list[0](global_4_feat))
+            logits_global_list.append(self.fc_global_max_4_list[0](global_4_max_feat.squeeze(3).squeeze(2)))
+            logits_global_list.append(self.fc_global_rest_4_list[0](global_4_rest_feat.squeeze(3).squeeze(2)))
+            logits_global_list.append(self.fc_global_2_list[0](global_2_feat))
+            logits_global_list.append(self.fc_global_max_2_list[0](global_2_max_feat.squeeze(3).squeeze(2)))
+            logits_global_list.append(self.fc_global_rest_2_list[0](global_2_rest_feat.squeeze(3).squeeze(2)))
+
+            return final_feat_list, logits_local_rest_list, logits_local_list, logits_rest_list, logits_global_list
+
+        return final_feat_list
