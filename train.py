@@ -77,7 +77,7 @@ def main(args):
 
     # Losses and Optimizer
     cross_entropy_loss = CrossEntropyLoss()
-    triplet_loss = TripletSemiHardLoss(device=device, margin=args.margin)
+    triplet_loss = TripletSemiHardLoss(margin=args.margin)
 
     finetuned_params = list(model.base.parameters())
 
@@ -116,9 +116,10 @@ def main(args):
 
             optimizer.zero_grad()
             print("Forward Data")
-
             final_feat_list, logits_local_rest_list, logits_local_list, logits_rest_list, logits_global_list = model(inputs)
+            print("Test - 1")
             T_loss = torch.sum(torch.stack([cross_entropy_loss(output, labels) for output in final_feat_list]))
+            print("Test - 2")
             print(T_loss)
             exit()
 

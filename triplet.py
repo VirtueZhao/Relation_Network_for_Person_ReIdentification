@@ -2,6 +2,8 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+DEVICE = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
+
 
 class TripletSemiHardLoss(nn.Module):
     """
@@ -11,9 +13,8 @@ class TripletSemiHardLoss(nn.Module):
         - Output: scalar.
     """
 
-    def __init__(self, device, margin=0, size_average=True):
+    def __init__(self, margin=0, size_average=True):
         super(TripletSemiHardLoss, self).__init__()
-        self.device = device
         self.margin = margin
         self.size_average = size_average
 
@@ -42,10 +43,9 @@ class TripletSemiHardLoss(nn.Module):
         pos_max, pos_idx = _mask_max(dist, pos_mask, axis=-1)
         neg_min, neg_idx = _mask_min(dist, neg_mask, axis=-1)
 
-        y = torch.ones(same_id.size()[0]).to(self.device)
+        y = torch.ones(same_id.size()[0]).to(DEVICE)
         return F.margin_ranking_loss(neg_min.float(),
                                      pos_max.float(),
                                      y,
                                      self.margin,
                                      self.size_average)
-
