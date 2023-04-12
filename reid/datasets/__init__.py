@@ -6,16 +6,16 @@ AVAILABLE_DATASETS = {
 }
 
 
-def create(dataset_name, dataset_path, *args, **kwargs):
+def create(name, root, *args, **kwargs):
     """
     Create a dataset instance.
 
     Parameters
     ----------
-    dataset_name : str
+    name : str
         The dataset name. Can be one of 'cuhk03',
         'market1501', and 'dukemtmc'.
-    dataset_path : str
+    root : str
         The path to the dataset directory.
     split_id : int, optional
         The index of data split. Default: 0
@@ -26,6 +26,6 @@ def create(dataset_name, dataset_path, *args, **kwargs):
         If True, will download the dataset. Default: False
     """
 
-    if dataset_name not in AVAILABLE_DATASETS:
-        raise KeyError("Unknown Dataset: ", dataset_name)
-    return AVAILABLE_DATASETS[dataset_name](dataset_path, *args, **kwargs)
+    if name not in AVAILABLE_DATASETS:
+        raise KeyError("Unknown Dataset: ", name)
+    return AVAILABLE_DATASETS[name](root, *args, **kwargs)
