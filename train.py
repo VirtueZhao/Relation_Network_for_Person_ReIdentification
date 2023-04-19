@@ -8,11 +8,17 @@ import torch.optim as optim
 from tabulate import tabulate
 from torch.autograd import Variable
 from torch.nn import CrossEntropyLoss
-
 from triplet import TripletSemiHardLoss
 from reid.utils.meters import AverageMeter
 from utils import get_data, adjust_lr_staircase
 from Relation_final_ver_last_multi_scale_large_losses import RelationModel as Model
+
+# import torch.nn as nn
+# from torch.nn.modules import loss
+# from torch.nn import functional as F
+# from torch.utils.data import DataLoader
+# from torch.nn.parallel import DataParallel
+# from reid.evaluation_metrics import accuracy
 
 
 def print_args(args):
@@ -117,11 +123,33 @@ def main(args):
             optimizer.zero_grad()
             print("Forward Data")
             final_feat_list, logits_local_rest_list, logits_local_list, logits_rest_list, logits_global_list = model(inputs)
-            print("Test - 1")
-            T_loss = torch.sum(torch.stack([cross_entropy_loss(output, labels) for output in final_feat_list]))
-            print("Test - 2")
-            print(T_loss)
-            exit()
+            T_loss = torch.sum(torch.stack([triplet_loss(output, labels) for output in final_feat_list]))
+
+            C_loss_local = torch.sum(torch.stack(
+                [cross_entropy_loss(output, labels) for output in logits_local_list]
+            ), dim=0)
+
+            C_loss_local_rest = torch.sum(torch.stack(
+                [cross_entropy_loss(output, labels) for output in logits_local_rest_list]
+            ), dim=0)
+
+            C_loss_rest = torch.sum(torch.stack(
+                [cross_entropy_loss(output, labels) for output in logits_rest_list]
+            ), dim=0)
+
+            C_loss_global = torch.sum(torch.stack(
+                [cross_entropy_loss(output, labels) for output in logits_global_list]
+            ), dim=0)
+
+            C_loss = C_loss_local_rest + C_loss_global + C_loss_local + C_loss_rest
+            loss = T_loss + 2 * C_loss
+
+            losses.update(loss.data.item(), labels.size(0))
+            prec1 = (
+                sum([accuracy(output.data, labels.data)[0].item() for output in logits_local_rest_list]) +
+                sum([])
+            )
+
 
         exit()
 
