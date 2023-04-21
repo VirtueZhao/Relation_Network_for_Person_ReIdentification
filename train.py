@@ -10,6 +10,7 @@ from torch.autograd import Variable
 from torch.nn import CrossEntropyLoss
 from triplet import TripletSemiHardLoss
 from reid.utils.meters import AverageMeter
+from reid.evaluation_metrics import accuracy
 from utils import get_data, adjust_lr_staircase
 from Relation_final_ver_last_multi_scale_large_losses import RelationModel as Model
 
@@ -18,7 +19,7 @@ from Relation_final_ver_last_multi_scale_large_losses import RelationModel as Mo
 # from torch.nn import functional as F
 # from torch.utils.data import DataLoader
 # from torch.nn.parallel import DataParallel
-# from reid.evaluation_metrics import accuracy
+
 
 
 def print_args(args):
@@ -147,8 +148,19 @@ def main(args):
             losses.update(loss.data.item(), labels.size(0))
             prec1 = (
                 sum([accuracy(output.data, labels.data)[0].item() for output in logits_local_rest_list]) +
-                sum([])
-            )
+                sum([accuracy(output.data, labels.data)[0].item() for output in logits_global_list]) +
+                sum([accuracy(output.data, labels.data)[0].item() for output in logits_local_list]) +
+                sum([accuracy(output.data, labels.data)[0].item() for output in logits_rest_list])
+            ) / (12 + 12 + 12 + 9)
+
+            precisions.update(prec1, labels.size(0))
+            loss.backward()
+            optimizer.step()
+            batch_time.update(time.time() - end)
+            end = time.time()
+
+            print(prec1)
+            exit()
 
 
         exit()
