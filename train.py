@@ -122,7 +122,6 @@ def main(args):
             labels = Variable(labels).cuda(device)
 
             optimizer.zero_grad()
-            print("Forward Data")
             final_feat_list, logits_local_rest_list, logits_local_list, logits_rest_list, logits_global_list = model(inputs)
             T_loss = torch.sum(torch.stack([triplet_loss(output, labels) for output in final_feat_list]))
 
@@ -159,18 +158,32 @@ def main(args):
             batch_time.update(time.time() - end)
             end = time.time()
 
-            print(prec1)
-            exit()
+            if (i + 1) % args.steps_per_log == 0:
+                print('Epoch: [{}][{}/{}]\t'
+                      'Time {:.3f} ({:.3f})\t'
+                      'Data {:.3f} ({:.3f})\t'
+                      'Loss {:.3f} ({:.3f})\t'
+                      'Prec {:.2%} ({:.2%})\t'
+                      .format(epoch, i + 1, len(train_loader),
+                              batch_time.val, args.steps_per_log * batch_time.avg,
+                              data_time.val, args.steps_per_log * data_time.avg,
+                              losses.val, losses.avg,
+                              precisions.val, precisions.avg))
+
+    torch.save(model, os.path.join(log_directory, 'model.pth'))
+
+    evaluate()
 
 
-        exit()
+def evaluate():
+    print("Evaluate Model")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--gpu", type=str, default="0", help="specify GPU")
     parser.add_argument("--seed", type=int, default=-1, help="only positive value enables a fixed seed")
-    parser.add_argument("--max_epoch", type=int, default=80)
+    parser.add_argument("--max_epoch", type=int, default=3)
     parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--lr", type=float, default=0.01)
     parser.add_argument("--backbone_lr", type=float, default=0.001, help="initial learning rate for resnet50")
