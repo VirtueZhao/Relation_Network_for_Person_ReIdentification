@@ -175,6 +175,49 @@ def main(args):
 
     torch.save(model, os.path.join(log_directory, 'model.pth'))
 
+    print("Evaluate Model")
+    model.eval()
+    batch_time = AverageMeter()
+    data_time = AverageMeter()
+
+    features = OrderedDict()
+    labels = OrderedDict()
+    end = time.time()
+
+    print('Extracting Features for Test Datasets')
+    with torch.no_grad():
+        for i, (imgs, fnames, pids, _) in enumerate(test_loader):
+            data_time.update(time.time() - end)
+
+            imgs_flip = torch.flip(imgs, [3])
+            final_feat_list, _, _, _, _, = model(Variable(imgs).cuda(device))
+            final_feat_list_flip, _, _, _, _ = model(Variable(imgs_flip).cuda(device))
+
+            for j in range(len(final_feat_list)):
+                if j == 0:
+                    outputs = (final_feat_list[j].cpu() + final_feat_list_flip[j].cpu()) / 2
+                else:
+                    outputs = torch.cat((outputs, (final_feat_list[j].cpu() + final_feat_list_flip[j].cpu()) / 2), 1)
+            outputs = F.normalize(outputs, p=2, dim=1)
+
+            for fname, output, pid in zip(fnames, outputs, pids):
+                features[fname] = output
+                labels[fname] = pid
+
+            batch_time.update(time.time() - end)
+            end = time.time()
+
+            if (i + 1) % 10 == 0:
+                print('Extract Features: [{}/{}]\t'
+                      'Time {:.3f} ({:.3f})\t'
+                      'Data {:.3f} ({:.3f})\t'.format(i + 1, len(test_loader),
+                                                      batch_time.val, batch_time.avg,
+                                                      data_time.val, data_time.avg))
+
+    # Evaluating Distance Matrix
+    distmat = evaluators.pairwise_distance(features, dataset.query, dataset.gallery)
+    evaluators.evaluate_all(distmat, dataset.query, dataset.gallery, dataset=args.dataset, top1=True)
+
 
 def evaluate(args):
     print("Evaluate Model")
@@ -186,7 +229,7 @@ def evaluate(args):
                                                                        args.num_workers, args.combine_trainval, np_ratio
                                                                        )
 
-    model = Model(last_conv_stride=1, num_stripes=6, local_conv_out_channels=256)
+    # model = Model(last_conv_stride=1, num_stripes=6, local_conv_out_channels=256)
     device = torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu")
     model = torch.load(os.path.join(log_directory, 'model.pth'))
     model.eval()
