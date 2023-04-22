@@ -1,5 +1,5 @@
 import torch
-from evaluation_metrics import cmc, mean_ap
+from reid.evaluation_metrics import cmc, mean_ap
 
 
 def pairwise_distance(features, query=None, gallery=None, metric=None):
@@ -13,12 +13,12 @@ def pairwise_distance(features, query=None, gallery=None, metric=None):
     dist.addmm_(1, -2, x, y.t())
     return dist
 
+
 def evaluate_all(distmat, query=None, gallery=None, cmc_topk=(1, 5, 10), dataset=None, top1=True):
-    if query is not None and gallery is not None:
-        query_ids = [pid for _, pid, _ in query]
-        gallery_ids = [pid for _, pid, _ in gallery]
-        query_cams = [cam for _, _, cam in query]
-        gallery_cams = [cam for _, _, cam in gallery]
+    query_ids = [pid for _, pid, _ in query]
+    gallery_ids = [pid for _, pid, _ in gallery]
+    query_cams = [cam for _, _, cam in query]
+    gallery_cams = [cam for _, _, cam in gallery]
 
     mAP = mean_ap(distmat, query_ids, gallery_ids, query_cams, gallery_cams)
     print("Mean AP: {:4.1%}".format(mAP))

@@ -229,7 +229,7 @@ def evaluate(args):
 
     # Evaluating Distance Matrix
     distmat = evaluators.pairwise_distance(features, dataset.query, dataset.gallery)
-    evaluators.evaluate_all(distmat, dataset.query, dataset.gallery, dataset=args.dataset_type, top1=True)
+    evaluators.evaluate_all(distmat, dataset.query, dataset.gallery, dataset=args.dataset, top1=True)
 
 
 if __name__ == "__main__":

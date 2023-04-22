@@ -3,7 +3,7 @@ import torch
 
 def to_numpy(tensor):
     if torch.is_tensor(tensor):
-        return tensor.cpu().numoy()
+        return tensor.cpu().numpy()
     elif type(tensor).__module__ != 'numpy':
         raise ValueError("Cannot Convert {} to Numpy Array".format(type(tensor)))
 
